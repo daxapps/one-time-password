@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const twilio = require('twilio');
+const twilio = require('./twilio');
 
 module.exports = function(req, res) {
 	if (!req.body.phone) {
@@ -14,8 +14,15 @@ module.exports = function(req, res) {
 
 			twilio.messages.create({
 				body: 'Your code is ' + code,
-				to: phone,
+				to: '+' + phone,
 				from: '+17029788263 '
+			}, (err) => {
+				if (err) { return res.status(422).send(err); }
+
+				admin.database().ref('users/' + phone)
+					.update({ code: code, codeValid: true }, () => {
+						res.send({ success: true });
+					});
 			})
 		})
 		.catch((err) => {
